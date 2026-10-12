@@ -7,7 +7,9 @@ import PieChartStatus from './components/PieChartStatus';
 import BlockChecklist from './components/BlockChecklist';
 import ReportModal from './components/ReportModal';
 import QuickScanModal from './components/QuickScanModal';
+import LoginScreen from './components/LoginScreen';
 import { INITIAL_CUSTOMERS } from './utils/parser';
+import { USER_ROLES, AUTH_STORAGE_KEY } from './utils/auth';
 
 const STORAGE_KEY = 'saint_gobain_multi_customer_data_v2';
 
@@ -16,6 +18,38 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('mfg_theme') || 'dark';
   });
+
+  // Current Authenticated Operator / Role State (admin, assembly, finishing)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error loading auth user:', e);
+      }
+    }
+    return null; // When opening the web, prompt login screen with 3 user types
+  });
+
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  };
+
+  const handleSwitchRole = (roleId) => {
+    const roleKey = (roleId || '').toUpperCase();
+    if (USER_ROLES[roleKey]) {
+      const updatedUser = USER_ROLES[roleKey];
+      setCurrentUser(updatedUser);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
+    }
+  };
 
   // Master Multi-Customer List
   const [customers, setCustomers] = useState(() => {
@@ -273,6 +307,17 @@ export default function App() {
     }
   };
 
+  // If no user is authenticated, render the Saint-Gobain 3-role Login Screen!
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLogin={handleLogin}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Top Navbar */}
@@ -286,6 +331,9 @@ export default function App() {
         onOpenReport={() => setIsReportModalOpen(true)}
         onOpenQuickScan={() => setIsQuickScanOpen(true)}
         onResetAll={handleResetAll}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onSwitchRole={handleSwitchRole}
       />
 
       {/* PAGE VIEW 1: Customer Directory Master List (If no customer is selected) */}
@@ -296,6 +344,7 @@ export default function App() {
           onAddNewCustomer={() => setIsQuickScanOpen(true)}
           onDeleteCustomer={handleDeleteCustomer}
           onOpenQuickScan={() => setIsQuickScanOpen(true)}
+          currentUser={currentUser}
         />
       ) : (
         /* PAGE VIEW 2: Particular Selected Customer Workspace */
@@ -349,6 +398,7 @@ export default function App() {
             weightUnit={currentCustomer.weightUnit || 'kg'}
             currentFilter={currentBlockFilter}
             onFilterChange={setCurrentBlockFilter}
+            currentUser={currentUser}
           />
         </div>
       )}

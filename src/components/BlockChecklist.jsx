@@ -30,7 +30,8 @@ export default function BlockChecklist({
   onEditBlock,
   weightUnit = 'kg',
   currentFilter = 'all',
-  onFilterChange
+  onFilterChange,
+  currentUser
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('id-asc'); // 'id-asc' | 'weight-desc' | 'status'
@@ -488,15 +489,17 @@ export default function BlockChecklist({
                               gap: '0.5rem',
                             }}>
                               {[
-                                { key: 'lomVerified', label: '1. LOM Verified' },
-                                { key: 'bomAllocated', label: '2. BOM Allocated' },
-                                { key: 'mcApproved', label: '3. MC Approved' },
-                                { key: 'moldingCasting', label: '4. Mold / Fusion' },
-                                { key: 'machiningCutting', label: '5. Machining / Cutting' },
-                                { key: 'qualityInspection', label: '6. QC Inspection' },
-                                { key: 'readyForDispatch', label: '7. Ready for Dispatch' },
+                                { key: 'lomVerified', label: '1. LOM Verified', dept: 'assembly' },
+                                { key: 'bomAllocated', label: '2. BOM Allocated', dept: 'assembly' },
+                                { key: 'mcApproved', label: '3. MC Approved', dept: 'assembly' },
+                                { key: 'moldingCasting', label: '4. Mold / Fusion', dept: 'assembly' },
+                                { key: 'machiningCutting', label: '5. Machining / Cutting', dept: 'finishing' },
+                                { key: 'qualityInspection', label: '6. QC Inspection', dept: 'finishing' },
+                                { key: 'readyForDispatch', label: '7. Ready for Dispatch', dept: 'finishing' },
                               ].map(stage => {
                                 const isStageDone = stages[stage.key];
+                                const isMyDept = currentUser?.role === 'admin' || currentUser?.role === stage.dept;
+
                                 return (
                                   <div
                                     key={stage.key}
@@ -504,25 +507,50 @@ export default function BlockChecklist({
                                     style={{
                                       padding: '0.5rem 0.75rem',
                                       borderRadius: 'var(--radius-sm)',
-                                      background: isStageDone ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                                      border: `1px solid ${isStageDone ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.07)'}`,
+                                      background: isStageDone 
+                                        ? 'rgba(16, 185, 129, 0.12)' 
+                                        : isMyDept 
+                                        ? (stage.dept === 'assembly' ? 'rgba(0, 242, 254, 0.05)' : 'rgba(16, 185, 129, 0.05)')
+                                        : 'rgba(255, 255, 255, 0.02)',
+                                      border: `1px solid ${
+                                        isStageDone 
+                                          ? 'rgba(16, 185, 129, 0.35)' 
+                                          : isMyDept 
+                                          ? (stage.dept === 'assembly' ? 'rgba(0, 242, 254, 0.3)' : 'rgba(16, 185, 129, 0.3)')
+                                          : 'rgba(255, 255, 255, 0.06)'
+                                      }`,
                                       cursor: 'pointer',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      gap: '0.5rem',
+                                      justifyContent: 'space-between',
+                                      gap: '0.4rem',
                                       fontSize: '0.75rem',
                                       fontWeight: '600',
                                       color: isStageDone ? '#34d399' : 'var(--text-secondary)',
                                       transition: 'all 0.2s ease',
                                     }}
                                   >
-                                    <input
-                                      type="checkbox"
-                                      checked={!!isStageDone}
-                                      onChange={() => {}}
-                                      style={{ accentColor: 'var(--accent-emerald)', cursor: 'pointer' }}
-                                    />
-                                    <span>{stage.label}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={!!isStageDone}
+                                        onChange={() => {}}
+                                        style={{ accentColor: 'var(--accent-emerald)', cursor: 'pointer' }}
+                                      />
+                                      <span>{stage.label}</span>
+                                    </div>
+
+                                    <span style={{
+                                      fontSize: '0.62rem',
+                                      textTransform: 'uppercase',
+                                      fontWeight: '700',
+                                      padding: '1px 5px',
+                                      borderRadius: '4px',
+                                      background: stage.dept === 'assembly' ? 'rgba(0, 242, 254, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                                      color: stage.dept === 'assembly' ? '#38bdf8' : '#34d399',
+                                    }}>
+                                      {stage.dept === 'assembly' ? 'Assembly' : 'Finishing'}
+                                    </span>
                                   </div>
                                 );
                               })}

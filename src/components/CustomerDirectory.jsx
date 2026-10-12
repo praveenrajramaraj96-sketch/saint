@@ -27,7 +27,8 @@ export default function CustomerDirectory({
   onSelectCustomer, 
   onAddNewCustomer, 
   onDeleteCustomer,
-  onOpenQuickScan
+  onOpenQuickScan,
+  currentUser
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'completed' | 'in-progress' | 'pending'
@@ -505,26 +506,28 @@ export default function CustomerDirectory({
 
                 {/* Column 5: Action Button & Enter Workspace Arrow */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteCustomer(cust.id);
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      padding: '0.4rem',
-                      borderRadius: '6px',
-                      transition: 'color 0.2s',
-                    }}
-                    title="Delete Customer Record"
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {currentUser?.permissions?.canDeleteCustomer ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteCustomer(cust.id);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '0.4rem',
+                        borderRadius: '6px',
+                        transition: 'color 0.2s',
+                      }}
+                      title="Delete Customer Record (Admin Only)"
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  ) : null}
 
                   <div style={{
                     display: 'flex',
